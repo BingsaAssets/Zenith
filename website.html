@@ -253,10 +253,22 @@
         }
 
         function testBadInternet() {
-
-            sessionStorage.removeItem('zenith_speed_warning_shown');
-            showSlowInternetWarning(2.5);
-            sessionStorage.setItem('zenith_speed_warning_shown', 'true');
+            window.isBadInternetMode = !window.isBadInternetMode;
+            if (window.isBadInternetMode) {
+                showSlowInternetWarning(2.5); // Show warning as visual indicator
+                // Also show a toast or alert that mode is ON
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-24 right-4 bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-xl z-[10005] animate-bounce';
+                toast.innerHTML = '<i class="fas fa-wifi mr-2"></i>Bad Internet Mode: <b>ON</b>';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            } else {
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-24 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-xl z-[10005]';
+                toast.innerHTML = '<i class="fas fa-wifi mr-2"></i>Bad Internet Mode: <b>OFF</b>';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
         }
 
         function showLegalDisclaimer() {
@@ -475,12 +487,12 @@
             { t: 'FNAF Ultimate Custom Night', u: 'https://nebulagames.us/storage/Five%20Nights%20at%20Freddys_%20Ultimate%20Custom%20Night.html', c: 'ef4444', y: 'processMatrix', g: 'Game', i: './games/images/FNAF%20Ultimate%20Custom%20Night.png' },
             { t: 'FNAF World', u: 'https://nebulagames.us/storage/Five%20Nights%20at%20Freddys_%20World.html', c: 'ef4444', y: 'processMatrix', g: 'Game', i: './games/images/FNAF%20World.png' },
             { t: 'Friday Night Funkin', u: '', c: 'ef4444', y: 'executeVariant', g: 'Game', i: './games/images/Friday%20Night%20Funkin.png' },
-            { t: 'Minecraft', u: '', c: '10b981', y: 'executeVariant', g: 'Game', i: './games/images/Minecraft.png' },
             { t: 'Fruit Ninja', u: 'https://nebulagames.us/storage/Fruit%20Ninja.html', c: '10b981', y: 'processMatrix', g: 'Game', i: './games/images/Fruit%20Ninja.png' },
             { t: 'Geometry Dash Lite', u: 'https://nebulagames.us/storage/Geometry%20Dash%20Lite.html', c: '3b82f6', y: 'processMatrix', g: 'Game', i: './games/images/Geometry%20Dash%20Lite.png' },
             { t: 'Gobble', u: 'https://nebulagames.us/storage/Gobble.html', c: '10b981', y: 'processMatrix', g: 'Game', i: './games/images/Gobble.png' },
             { t: 'Infinite Craft', u: 'https://infinitecraftnew.com', c: '10b981', y: 'processMatrix', g: 'Game', i: './games/images/Infinite%20Craft.png' },
             { t: 'Level Devil', u: 'https://nebulagames.us/storage/clleveldevil.html', c: 'ef4444', y: 'processMatrix', g: 'Game', i: './games/images/Level%20Devil.png' },
+            { t: 'Minecraft', u: '', c: '10b981', y: 'executeVariant', g: 'Game', i: './games/images/Minecraft.png' },
             { t: 'OvO', u: 'https://nebulagames.us/storage/ovo/', c: '111827', y: 'processMatrix', g: 'Game', i: './games/images/OvO.png' },
             { t: 'Paper.io 2', u: 'https://nebulagames.us/storage/paperio2/', c: 'facc15', y: 'processMatrix', g: 'Game', i: './games/images/Paper.io%202.png' },
             { t: 'Poly Track', u: 'https://html-classic.itch.zone/html/15451330/index.html', c: 'ef4444', y: 'processMatrix', g: 'Game', i: './games/images/Poly%20Track.png' },
@@ -635,23 +647,27 @@
         function executeVariant(title) {
             const asset = ALL_ASSETS.find(a => a.t === title);
             if (!asset) return console.error('Asset not found for title:', title);
-            const assetTitle = asset.t;
 
             const userAgent = navigator.userAgent;
             const isMobileDevice = /Mobi|Android|iPhone|iPod|iPad/i.test(userAgent);
             const isSafariBrowser = userAgent.includes('Safari') && !userAgent.includes('Chrome');
             const loadMobileVersion = isMobileDevice || isSafariBrowser;
-            let url;
+
+            let url = '';
 
             if (title === 'Friday Night Funkin') {
                 const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
                 const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
                 url = loadMobileVersion ? mobileUrl : desktopUrl;
-            } else if (title === 'Minecraft') {
+            } else if (title === 'Minecraft 1.8.8') {
                 const desktopUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/';
                 const mobileUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/?userscript=irv77-eaglercraft-mobile.js';
                 url = loadMobileVersion ? mobileUrl : desktopUrl;
+            } else {
+                console.error('No variant logic defined for:', title);
+                return;
             }
+
             const tempAsset = { ...asset, u: url };
             processMatrixInternal(tempAsset);
         }
@@ -700,56 +716,15 @@
                 </div>
             `;
             const loadingBar = loadingOverlay.querySelector('#loading-bar');
-            let progress = 0;
+
             const iframe = document.createElement('iframe');
             iframe.id = 'asset-iframe';
 
-            const interval = setInterval(() => {
-                if (progress < 70) {
-                    progress += 10;
-                    if (loadingBar) loadingBar.style.width = `${progress}%`;
-                } else {
-                    clearInterval(interval);
-                    iframe.src = url;
-                }
-            }, 50);
-
-            const controlBar = document.createElement('div');
-            controlBar.className = 'asset-control-bar';
-
-
-
-            const displayToggleButton = document.createElement('button');
-            displayToggleButton.id = 'fullscreen-toggle-button';
-            displayToggleButton.className = 'fullscreen-button';
-            displayToggleButton.innerHTML = '<i id="fs-icon" class="fas fa-expand"></i>';
-            displayToggleButton.onclick = () => adjustCanvasGeometry(renderTarget);
-            // Mute/Unmute Button
-            const muteButton = document.createElement('button');
-            muteButton.className = 'fullscreen-button';
-            muteButton.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            let isMuted = false;
-
-            muteButton.onclick = () => {
-                isMuted = !isMuted;
-
-                // 1. Update UI
-                if (isMuted) {
-                    muteButton.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                } else {
-                    muteButton.innerHTML = '<i class="fas fa-volume-up"></i>';
-                }
-
-                // 2. Send message to parent (index.html) to mute the iframe
-                try {
-                    window.parent.postMessage({ type: 'MUTE_IFRAME', muted: isMuted }, '*');
-                } catch (e) {
-                    console.warn('Could not send mute message to parent:', e);
-                }
-            };
-            controlBar.appendChild(muteButton);
-
-            controlBar.appendChild(displayToggleButton);
+            // Allow attributes - using 'allow' for everything including fullscreen to avoid warnings
+            // Note: 'sandbox' with 'allow-scripts' and 'allow-same-origin' is necessary for many games but triggers a console warning.
+            iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; focus-without-user-activation; clipboard-write; gyroscope; accelerometer');
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-modals allow-orientation-lock');
+            iframe.setAttribute('loading', 'lazy');
 
 
             iframe.className = 'border-none opacity-0 transition-opacity duration-500';
@@ -761,65 +736,119 @@
                 iframe.className += ' w-full h-full';
             }
 
-            iframe.setAttribute('allow', 'fullscreen; gamepad; pointer-lock');
-            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-pointer-lock');
-            iframe.setAttribute('allowfullscreen', 'true');
-            iframe.setAttribute('loading', 'lazy');
             const centeringWrapper = document.createElement('div');
             centeringWrapper.className = 'asset-iframe-content';
             centeringWrapper.appendChild(iframe);
+
+            const controlBar = document.createElement('div');
+            controlBar.className = 'asset-control-bar';
+
+            const displayToggleButton = document.createElement('button');
+            displayToggleButton.id = 'fullscreen-toggle-button';
+            displayToggleButton.className = 'fullscreen-button';
+            displayToggleButton.innerHTML = '<i id="fs-icon" class="fas fa-expand"></i>';
+            displayToggleButton.onclick = () => adjustCanvasGeometry(renderTarget);
+
+            // Mute/Unmute Button
+            const muteButton = document.createElement('button');
+            muteButton.className = 'fullscreen-button';
+            muteButton.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            let isMuted = false;
+
+            muteButton.onclick = () => {
+                isMuted = !isMuted;
+                if (isMuted) {
+                    muteButton.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                } else {
+                    muteButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+                }
+                try {
+                    window.parent.postMessage({ type: 'MUTE_IFRAME', muted: isMuted }, '*');
+                } catch (e) {
+                    console.warn('Could not send mute message to parent:', e);
+                }
+            };
+            controlBar.appendChild(muteButton);
+            controlBar.appendChild(displayToggleButton);
+
             renderTarget.appendChild(controlBar);
             renderTarget.appendChild(centeringWrapper);
             renderTarget.appendChild(loadingOverlay);
+
+            // Progress Bar Logic
+            let progress = 0;
+            // Slower loading simulation if Bad Internet Mode is on
+            const progressIncrement = window.isBadInternetMode ? 0.5 : 5;
+            const intervalSpeed = window.isBadInternetMode ? 200 : 50;
+
+            const interval = setInterval(() => {
+                // Cap progress at 90% until onload fires
+                if (progress < 90) {
+                    progress += Math.random() * progressIncrement;
+                    if (progress > 90) progress = 90;
+                    if (loadingBar) loadingBar.style.width = `${progress}%`;
+                }
+            }, intervalSpeed);
+
+            // Initialize src immediately to start loading
+            // We give it a tiny delay to ensure the iframe is in the DOM (though usually execution is synchronous enough)
+            // But to match the previous flow feeling, passing src immediately is best.
+            // Using a slight timeout for the progress bar to start visibly.
+            setTimeout(() => {
+                iframe.src = url;
+            }, 100);
+
             iframe.onload = () => {
+                // When actually loaded (or about:blank check passed)
+                // Filter out initial about:blank load if browser fires it immediately
+                if (iframe.src === '' || iframe.src === 'about:blank') return;
+
                 clearInterval(interval);
                 if (loadingBar) loadingBar.style.width = '100%';
-                loadingOverlay.style.opacity = '0';
-                iframe.classList.remove('opacity-0');
-                setTimeout(() => {
-                    loadingOverlay.remove();
-                }, 500);
 
+                // Slight delay to show 100% bar
+                setTimeout(() => {
+                    loadingOverlay.style.opacity = '0';
+                    iframe.classList.remove('opacity-0');
+                    setTimeout(() => {
+                        loadingOverlay.remove();
+                    }, 500);
+                }, 300);
 
                 try {
-                    // INFO: Attempting to auto-mute game media as requested.
                     const mediaElements = iframe.contentWindow.document.querySelectorAll('video, audio');
                     mediaElements.forEach(media => {
                         media.muted = true;
                     });
                 } catch (e) {
-                    // This block WILL fail for cross-origin iframes.
-                    // The user requested to "EXPLAIN, NOT FIX" this error, so we log it clearly.
-                    console.log("Note: Auto-mute unavailable for this game (likely cross-origin). Use in-game settings.");
+                    // Expected cross-origin error
                 }
             };
 
             iframe.onerror = () => {
-                console.error(`DEVELOPER ERROR: Iframe failed to load content for "${title}" (${url}). Likely a 404 or connection Refused.`);
-                // User feedback: The loading overlay will eventually time out or we can show a message.
-                // Since iframes rarely fire onerror for HTTP errors, the timeout is the backup.
-                loadingOverlay.remove();
+                console.error(`DEVELOPER ERROR: Iframe failed to load content for "${title}" (${url}).`);
+                // Force remove overlay after timeout if error
             };
 
-
+            // Failsafe timeout
             setTimeout(() => {
                 if (document.body.contains(loadingOverlay)) {
-                    console.warn(`DEVELOPER WARNING: Game load timed out for "${title}". It might be blocked or very slow.`);
-                    // User feedback is implicit (loading disappears), but we can log for dev.
+                    // If stuck loading for 15s, just show it
+                    clearInterval(interval);
                     loadingOverlay.style.opacity = '0';
                     iframe.classList.remove('opacity-0');
                     setTimeout(() => loadingOverlay.remove(), 500);
                 }
-            }, 15000);
+            }, window.isBadInternetMode ? 30000 : 15000); // Longer timeout for bad internet mode
 
-
+            // Skip button
             setTimeout(() => {
                 if (document.body.contains(loadingOverlay)) {
                     const skipButton = document.createElement('button');
                     skipButton.className = 'mt-6 px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors duration-200 shadow-lg border border-gray-500';
                     skipButton.innerHTML = '<i class="fas fa-forward mr-2"></i>Skip Loading';
                     skipButton.onclick = () => {
-                        console.log("User skipped loading.");
+                        clearInterval(interval);
                         loadingOverlay.style.opacity = '0';
                         iframe.classList.remove('opacity-0');
                         setTimeout(() => loadingOverlay.remove(), 500);
@@ -1022,9 +1051,8 @@
                         onload="handleTesterAssetLoad(false, this)"
                         onerror="handleTesterAssetLoad(true, this)"
                         loading="lazy"
-                        loading="lazy"
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
-                        allow="fullscreen; gamepad; pointer-lock">
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-modals allow-orientation-lock"
+                        allow="autoplay; fullscreen; encrypted-media; focus-without-user-activation; clipboard-write; gyroscope; accelerometer">
                     </iframe>
                     <button onclick="launchTesterAsset('${safeUrl}', '${safeTitle}', '${color}')" 
                             class="absolute bottom-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition duration-300 z-30 hover:bg-zenith-purple/70">
@@ -1039,20 +1067,14 @@
         }
         function generateTesterCatalog() {
             testerAssetList = [];
+            const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
+            const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
             for (const asset of ALL_ASSETS) {
                 const decodedTitle = asset.t;
                 if (asset.y === 'executeVariant') {
-                    if (decodedTitle === 'Friday Night Funkin') {
-                        const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
-                        const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
-                        testerAssetList.push({ t: `${decodedTitle} (Desktop)`, u: desktopUrl, g: asset.g, c: asset.c, i: asset.i });
-                        testerAssetList.push({ t: `${decodedTitle} (Mobile)`, u: mobileUrl, g: asset.g, c: asset.c, i: asset.i });
-                    } else if (decodedTitle === 'Minecraft') {
-                        const desktopUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/';
-                        const mobileUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/?userscript=irv77-eaglercraft-mobile.js';
-                        testerAssetList.push({ t: `${decodedTitle} (Desktop)`, u: desktopUrl, g: asset.g, c: asset.c, i: asset.i });
-                        testerAssetList.push({ t: `${decodedTitle} (Mobile)`, u: mobileUrl, g: asset.g, c: asset.c, i: asset.i });
-                    }
+                    const fnfTitle = decodedTitle;
+                    testerAssetList.push({ t: `${fnfTitle} (Desktop)`, u: desktopUrl, g: asset.g, c: asset.c, i: asset.i });
+                    testerAssetList.push({ t: `${fnfTitle} (Mobile)`, u: mobileUrl, g: asset.g, c: asset.c, i: asset.i });
                 } else {
                     testerAssetList.push({ ...asset, t: decodedTitle });
                 }
@@ -1283,7 +1305,7 @@
 <body class="font-sans bg-gray-900 text-gray-100">
     <div id="website-splash-loader"
         class="fixed inset-0 z-[10000] bg-zenith-dark flex flex-col items-center justify-center transition-opacity duration-300">
-        <img src="./ui/logo.png" alt="Zenith Logo" class="w-16 h-16 mb-4 animate-pulse object-contain" />
+        <img src="/ui/logo.png" alt="Zenith Logo" class="w-16 h-16 mb-4 animate-pulse object-contain" />
 
         <h2 id="splash-title" class="text-3xl font-extrabold zenith-title-glow tracking-tighter">Zenith</h2>
         <p class="text-sm text-gray-400 mt-2">Loading interface...</p>
@@ -1311,7 +1333,7 @@
     <header
         class="py-3 px-4 md:px-8 flex items-center justify-between fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm">
         <a href="." class="flex items-center space-x-3" onclick="applySecretMode(false); return false;">
-            <img src="./ui/logo.png" alt="Zenith Logo" class="w-10 h-10 object-contain" />
+            <img src="/ui/logo.png" alt="Zenith Logo" class="w-10 h-10 object-contain" />
 
             <h1 id="header-title" class="text-xl md:text-3xl font-bold"></h1>
         </a>
