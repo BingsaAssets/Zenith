@@ -475,6 +475,7 @@
             { t: 'FNAF Ultimate Custom Night', u: 'https://nebulagames.us/storage/Five%20Nights%20at%20Freddys_%20Ultimate%20Custom%20Night.html', c: 'ef4444', y: 'processMatrix', g: 'Game', i: './games/images/FNAF%20Ultimate%20Custom%20Night.png' },
             { t: 'FNAF World', u: 'https://nebulagames.us/storage/Five%20Nights%20at%20Freddys_%20World.html', c: 'ef4444', y: 'processMatrix', g: 'Game', i: './games/images/FNAF%20World.png' },
             { t: 'Friday Night Funkin', u: '', c: 'ef4444', y: 'executeVariant', g: 'Game', i: './games/images/Friday%20Night%20Funkin.png' },
+            { t: 'Minecraft', u: '', c: '10b981', y: 'executeVariant', g: 'Game', i: './games/images/Minecraft.png' },
             { t: 'Fruit Ninja', u: 'https://nebulagames.us/storage/Fruit%20Ninja.html', c: '10b981', y: 'processMatrix', g: 'Game', i: './games/images/Fruit%20Ninja.png' },
             { t: 'Geometry Dash Lite', u: 'https://nebulagames.us/storage/Geometry%20Dash%20Lite.html', c: '3b82f6', y: 'processMatrix', g: 'Game', i: './games/images/Geometry%20Dash%20Lite.png' },
             { t: 'Gobble', u: 'https://nebulagames.us/storage/Gobble.html', c: '10b981', y: 'processMatrix', g: 'Game', i: './games/images/Gobble.png' },
@@ -641,12 +642,15 @@
             const isSafariBrowser = userAgent.includes('Safari') && !userAgent.includes('Chrome');
             const loadMobileVersion = isMobileDevice || isSafariBrowser;
             let url;
-            const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
-            const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
-            if (loadMobileVersion) {
-                url = mobileUrl;
-            } else {
-                url = desktopUrl;
+
+            if (title === 'Friday Night Funkin') {
+                const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
+                const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
+                url = loadMobileVersion ? mobileUrl : desktopUrl;
+            } else if (title === 'Minecraft') {
+                const desktopUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/';
+                const mobileUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/?userscript=irv77-eaglercraft-mobile.js';
+                url = loadMobileVersion ? mobileUrl : desktopUrl;
             }
             const tempAsset = { ...asset, u: url };
             processMatrixInternal(tempAsset);
@@ -757,8 +761,8 @@
                 iframe.className += ' w-full h-full';
             }
 
-            iframe.setAttribute('allow', 'fullscreen'); // Removed autoplay to "auto-mute" where possible
-            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms'); // No popups = rough adblock
+            iframe.setAttribute('allow', 'fullscreen; gamepad; pointer-lock');
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-pointer-lock');
             iframe.setAttribute('allowfullscreen', 'true');
             iframe.setAttribute('loading', 'lazy');
             const centeringWrapper = document.createElement('div');
@@ -1019,8 +1023,8 @@
                         onerror="handleTesterAssetLoad(true, this)"
                         loading="lazy"
                         loading="lazy"
-                        sandbox="allow-scripts allow-same-origin allow-forms"
-                        allowfullscreen="true">
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
+                        allow="fullscreen; gamepad; pointer-lock">
                     </iframe>
                     <button onclick="launchTesterAsset('${safeUrl}', '${safeTitle}', '${color}')" 
                             class="absolute bottom-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition duration-300 z-30 hover:bg-zenith-purple/70">
@@ -1035,14 +1039,20 @@
         }
         function generateTesterCatalog() {
             testerAssetList = [];
-            const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
-            const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
             for (const asset of ALL_ASSETS) {
                 const decodedTitle = asset.t;
                 if (asset.y === 'executeVariant') {
-                    const fnfTitle = decodedTitle;
-                    testerAssetList.push({ t: `${fnfTitle} (Desktop)`, u: desktopUrl, g: asset.g, c: asset.c, i: asset.i });
-                    testerAssetList.push({ t: `${fnfTitle} (Mobile)`, u: mobileUrl, g: asset.g, c: asset.c, i: asset.i });
+                    if (decodedTitle === 'Friday Night Funkin') {
+                        const desktopUrl = 'https://html-classic.itch.zone/html/2876359-1383886/index.html';
+                        const mobileUrl = 'https://html-classic.itch.zone/html/4459499/luckydog7.github.io-master/funkinmobile/game/index.html';
+                        testerAssetList.push({ t: `${decodedTitle} (Desktop)`, u: desktopUrl, g: asset.g, c: asset.c, i: asset.i });
+                        testerAssetList.push({ t: `${decodedTitle} (Mobile)`, u: mobileUrl, g: asset.g, c: asset.c, i: asset.i });
+                    } else if (decodedTitle === 'Minecraft') {
+                        const desktopUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/';
+                        const mobileUrl = 'https://irv77.github.io/AmplerLauncher/mc/1.8.8/?userscript=irv77-eaglercraft-mobile.js';
+                        testerAssetList.push({ t: `${decodedTitle} (Desktop)`, u: desktopUrl, g: asset.g, c: asset.c, i: asset.i });
+                        testerAssetList.push({ t: `${decodedTitle} (Mobile)`, u: mobileUrl, g: asset.g, c: asset.c, i: asset.i });
+                    }
                 } else {
                     testerAssetList.push({ ...asset, t: decodedTitle });
                 }
@@ -1273,7 +1283,7 @@
 <body class="font-sans bg-gray-900 text-gray-100">
     <div id="website-splash-loader"
         class="fixed inset-0 z-[10000] bg-zenith-dark flex flex-col items-center justify-center transition-opacity duration-300">
-        <img src="/ui/logo.png" alt="Zenith Logo" class="w-16 h-16 mb-4 animate-pulse object-contain" />
+        <img src="./ui/logo.png" alt="Zenith Logo" class="w-16 h-16 mb-4 animate-pulse object-contain" />
 
         <h2 id="splash-title" class="text-3xl font-extrabold zenith-title-glow tracking-tighter">Zenith</h2>
         <p class="text-sm text-gray-400 mt-2">Loading interface...</p>
@@ -1301,7 +1311,7 @@
     <header
         class="py-3 px-4 md:px-8 flex items-center justify-between fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm">
         <a href="." class="flex items-center space-x-3" onclick="applySecretMode(false); return false;">
-            <img src="/ui/logo.png" alt="Zenith Logo" class="w-10 h-10 object-contain" />
+            <img src="./ui/logo.png" alt="Zenith Logo" class="w-10 h-10 object-contain" />
 
             <h1 id="header-title" class="text-xl md:text-3xl font-bold"></h1>
         </a>
